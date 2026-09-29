@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "ProFinder — Поиск профессионалов" %}{% endblock %}
+
+{% block content %}
+<!-- Заголовок страницы -->
+<div class="page-header animate-fade-in-down">
+    <h1>{% trans "Найдите" %} <span class="highlight">{% trans "профессионала" %}</span> {% trans "рядом" %}</h1>
+    <p>{% trans "Няни, врачи, репетиторы, мастера — все в одном месте" %}</p>
+</div>
+
+<!-- Панель поиска -->
+<div class="search-panel animate-fade-in-up">
+    <div class="search-title"><span class="icon">🔍</span> {% trans "Поиск услуг" %}</div>
+    <form method="get" action="{% url 'index' %}">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="id_category">{% trans "Категория" %}</label>
+                <select name="category" id="id_category">
+                    <option value="">{% trans "Все категории" %}</option>
+                    {% for slug, name in categories %}
+                        <option value="{{ slug }}" {% if current_category == slug %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="id_country">{% trans "Страна" %}</label>
+                <input type="text" name="country" id="id_country" list="countries-list"
+                       value="{{ current_country }}" placeholder="{% trans 'Россия' %}">
+                <datalist id="countries-list">
+                    {% for c in countries %}<option value="{{ c }}">{% endfor %}
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label for="id_city">{% trans "Город / Ключевое слово" %}</label>
+                <input type="text" name="city" id="id_city" list="cities-list"
+                       value="{{ current_city }}" placeholder="{% trans 'Москва, няня...' %}">
+                <datalist id="cities-list">
+                    {% for c in cities %}<option value="{{ c }}">{% endfor %}
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-primary">🔍 {% trans "Найти" %}</button>
+            </div>
+        </div>
+        <!-- Скрытый q для ключевых слов -->
+        <input type="hidden" name="q" value="{{ current_q }}">
+    </form>
+</div>
+
+<!-- Результаты -->
+<div class="results-header">
+    <h3>{% trans "Найдено услуг" %}</h3>
+    <span class="count">{{ results_count }}</span>
+</div>
+
+{% if services %}
+    <div class="provider-grid">
+        {% for s in services %}
+        <div class="provider-card animate-fade-in-up delay-{{ forloop.counter|divisibleby:6|yesno:'1,2' }}">
+            <div class="card-left">
+                {% if s.user.profile.avatar %}
+                    <img src="{{ s.user.profile.avatar.url }}" alt="{{ s.user.username }}"
+                         class="avatar" style="object-fit: cover;">
+                {% else %}
+                    <div class="avatar">{{ s.user.username|slice:":1"|upper }}</div>
+                {% endif %}
+                <div class="main-info">
+                    <h3>
+                        <a href="{% url 'service_detail' s.pk %}">{{ s.title }}</a>
+                    </h3>
+                    <div class="tags">
+                        <span class="category-tag">{{ s.get_category_display }}</span>
+                        {% if s.avg_rating %}
+                            <span class="rating">★ {{ s.avg_rating }} ({{ s.reviews_count }})</span>
+                        {% endif %}
+                        {% if s.user.profile.is_provider %}
+                            <span class="verified">✓ {% trans "Проверен" %}</span>
+                        {% endif %}
+                    </div>
+                    <div class="location">📍 {{ s.country }}, {{ s.city }}</div>
+                    <div class="description">{{ s.description|truncatechars:150 }}</div>
+                </div>
+            </div>
+            <div class="card-right">
+                {% if s.price %}
+                    <div class="phone" style="color: var(--hh-accent); font-weight: 700;">
+                        {{ s.price }} ₽{% if s.price_unit %}/{{ s.price_unit }}{% endif %}
+                    </div>
+                {% endif %}
+                <a href="{% url 'service_detail' s.pk %}" class="chat-btn" style="text-decoration:none; display:inline-block; text-align:center;">
+                    {% trans "Подробнее" %}
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="hint">
+        😕 {% trans "Ничего не найдено. Попробуйте изменить параметры поиска." %}
+    </div>
+{% endif %}
+{% endblock %}

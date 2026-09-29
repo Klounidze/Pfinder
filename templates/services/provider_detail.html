@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ service.title }} — ProFinder{% endblock %}
+
+{% block content %}
+<div class="provider-detail animate-fade-in-up">
+    <div class="detail-header">
+        <h1>{{ service.title }}</h1>
+        <a href="{% url 'index' %}" class="back-link">← {% trans "Назад к поиску" %}</a>
+    </div>
+
+    <div class="detail-card">
+        <div style="display: flex; gap: 24px; align-items: center; margin-bottom: 20px;">
+            {% if service.user.profile.avatar %}
+                <img src="{{ service.user.profile.avatar.url }}" alt="avatar"
+                     style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+            {% else %}
+                <div class="avatar" style="width: 80px; height: 80px; font-size: 2rem;">{{ service.user.username|slice:":1"|upper }}</div>
+            {% endif %}
+            <div>
+                <h3>
+                    <a href="{% url 'public_profile' service.user.username %}" style="color: var(--hh-primary); text-decoration: none;">
+                        {{ service.user.get_full_name|default:service.user.username }}
+                    </a>
+                </h3>
+                <p style="color: var(--hh-gray);">
+                    {% if service.avg_rating %}
+                        <span class="rating">★ {{ service.avg_rating }} ({{ service.reviews_count }} {% trans "отзывов" %})</span>
+                    {% endif %}
+                </p>
+                {% if request.user.is_authenticated and request.user != service.user %}
+                    <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                        <a href="{% url 'start_dialog' service.user.id %}" class="btn btn-primary">💬 {% trans "Написать" %}</a>
+                        <form method="post" action="{% url 'create_order' service.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline">📋 {% trans "Оставить заявку" %}</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="detail-grid">
+            <div class="label">{% trans "Категория" %}</div>
+            <div class="value"><span class="category-tag">{{ service.get_category_display }}</span></div>
+
+            <div class="label">{% trans "Цена" %}</div>
+            <div class="value">
+                {% if service.price %}{{ service.price }} ₽{% if service.price_unit %}/{{ service.price_unit }}{% endif %}{% else %}—{% endif %}
+            </div>
+
+            <div class="label">{% trans "Страна" %}</div>
+            <div class="value">{{ service.country }}</div>
+
+            <div class="label">{% trans "Город" %}</div>
+            <div class="value">{{ service.city }}</div>
+
+            {% if service.phone %}
+                <div class="label">{% trans "Телефон" %}</div>
+                <div class="value">{{ service.phone }}</div>
+            {% endif %}
+
+            <hr class="divider">
+            <div class="label full-width">{% trans "Описание" %}</div>
+            <div class="value full-width">{{ service.description|linebreaks }}</div>
+        </div>
+    </div>
+
+    <!-- Отзывы -->
+    <div class="reviews-section">
+        <h3>💬 {% trans "Отзывы" %} ({{ reviews.count }})</h3>
+        {% if reviews %}
+            {% for r in reviews %}
+                <div class="review-item">
+                    <div class="review-header">
+                        <span class="review-author">{{ r.author.username }}</span>
+                        <span class="review-rating">{% for _ in "12345"|make_list %}{% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}</span>
+                        <span class="review-date">{{ r.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <p class="review-comment">{{ r.comment }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="hint">{% trans "Пока нет отзывов" %}</p>
+        {% endif %}
+    </div>
+
+    <!-- Форма отзыва -->
+    {% if user.is_authenticated %}
+        <div class="add-review">
+            {% if can_review %}
+                <h4>✍️ {% trans "Оставить отзыв" %}</h4>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>{{ review_form.rating.label }}</label>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap; padding: 6px 0;">
+                            {% for radio in review_form.rating %}
+                                <label style="display: flex; align-items: center; gap: 6px; font-weight: 500; text-transform: none;">{{ radio.tag }} {{ radio.choice_label }}</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ review_form.comment.label }}</label>
+                        {{ review_form.comment }}
+                    </div>
+                    <button type="submit" class="btn btn-success">📩 {% trans "Отправить отзыв" %}</button>
+                </form>
+            {% else %}
+                <p class="hint">
+                    {% if request.user == service.user %}
+                        {% trans "Это ваша услуга." %}
+                    {% else %}
+                        {% trans "Отзыв можно оставить только после завершённого заказа." %}
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

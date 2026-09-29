@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Диалог" %} с {{ other.username }} — ProFinder{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in-up" style="max-width: 800px; margin: 0 auto;">
+    <div class="detail-header">
+        <h1>💬 {{ other.get_full_name|default:other.username }}</h1>
+        <a href="{% url 'inbox' %}" class="back-link">← {% trans "Все диалоги" %}</a>
+    </div>
+
+    <div class="detail-card" style="padding: 24px;">
+        <div class="chat-modal-messages" id="messagesBox" style="max-height: 500px; min-height: 300px;">
+            {% for m in messages_list %}
+                <div class="chat-modal-message {% if m.sender == user %}own{% else %}other{% endif %}">
+                    <div style="font-size: 0.7rem; color: var(--hh-gray); margin-bottom: 2px;">
+                        {{ m.sender.username }} · {{ m.created_at|date:"d.m.Y H:i" }}
+                    </div>
+                    {{ m.content }}
+                </div>
+            {% empty %}
+                <p class="no-messages-hint">{% trans "Начните диалог — напишите первое сообщение." %}</p>
+            {% endfor %}
+        </div>
+
+        <form method="post" class="chat-modal-input" style="margin-top: 16px;">
+            {% csrf_token %}
+            <input type="text" name="content" placeholder="{% trans 'Напишите сообщение...' %}" required autocomplete="off">
+            <button type="submit" class="btn btn-primary">📨 {% trans "Отправить" %}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Прокрутка вниз
+    const box = document.getElementById('messagesBox');
+    if (box) box.scrollTop = box.scrollHeight;
+</script>
+{% endblock %}

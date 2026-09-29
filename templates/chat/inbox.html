@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Сообщения" %} — ProFinder{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in-up">
+    <div class="page-header">
+        <h1>💬 {% trans "Сообщения" %}</h1>
+        <p>{% trans "Ваши диалоги" %}</p>
+    </div>
+
+    {% if dialogs %}
+        <div class="provider-grid">
+            {% for d in dialogs %}
+                <a href="{% url 'dialog' d.user.username %}" style="text-decoration: none; color: inherit;">
+                    <div class="provider-card">
+                        <div class="card-left">
+                            <div class="avatar">{{ d.user.username|slice:":1"|upper }}</div>
+                            <div class="main-info">
+                                <h3>{{ d.user.get_full_name|default:d.user.username }}</h3>
+                                <div class="description">{{ d.last_message.content|truncatechars:60 }}</div>
+                                <div class="location">{{ d.last_message.created_at|date:"d.m.Y H:i" }}</div>
+                            </div>
+                        </div>
+                        <div class="card-right">
+                            {% if d.unread > 0 %}
+                                <span class="badge badge-inactive">{{ d.unread }} {% trans "новых" %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="hint">📭 {% trans "У вас пока нет диалогов" %}</div>
+    {% endif %}
+</div>
+{% endblock %}

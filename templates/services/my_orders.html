@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Мои заказы" %} — ProFinder{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in-up">
+    <div class="page-header">
+        <h1>📋 {% trans "Мои заказы" %}</h1>
+        <p>{% trans "Управляйте заявками как клиент и как исполнитель" %}</p>
+    </div>
+
+    <h3 style="margin-bottom: 16px;">{% trans "Как клиент" %}</h3>
+    {% if as_client %}
+        <div class="provider-grid">
+            {% for o in as_client %}
+                <div class="provider-card">
+                    <div class="card-left">
+                        <div class="avatar">{{ o.service.title|slice:":1"|upper }}</div>
+                        <div class="main-info">
+                            <h3><a href="{% url 'service_detail' o.service.pk %}">{{ o.service.title }}</a></h3>
+                            <div class="tags">
+                                <span class="badge {% if o.status == 'completed' %}badge-approved{% elif o.status == 'cancelled' %}badge-inactive{% else %}badge-pending{% endif %}">
+                                    {{ o.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="location">👤 {{ o.service.user.username }}</div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="hint">{% trans "Пока нет заказов как клиент" %}</p>
+    {% endif %}
+
+    <h3 style="margin: 28px 0 16px;">{% trans "Как исполнитель" %}</h3>
+    {% if as_provider %}
+        <div class="provider-grid">
+            {% for o in as_provider %}
+                <div class="provider-card">
+                    <div class="card-left">
+                        <div class="avatar">{{ o.client.username|slice:":1"|upper }}</div>
+                        <div class="main-info">
+                            <h3><a href="{% url 'service_detail' o.service.pk %}">{{ o.service.title }}</a></h3>
+                            <div class="location">👤 {{ o.client.username }}</div>
+                        </div>
+                    </div>
+                    <div class="card-right">
+                        <form method="post" style="display: flex; gap: 6px; align-items: center;">
+                            {% csrf_token %}
+                            <input type="hidden" name="order_id" value="{{ o.id }}">
+                            <select name="status" class="form-control" style="padding: 6px 10px; height: auto;">
+                                {% for val, label in o.STATUS_CHOICES %}
+                                    <option value="{{ val }}" {% if o.status == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary" style="padding: 6px 16px; height: auto;">✓</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="hint">{% trans "Пока нет заказов как исполнитель" %}</p>
+    {% endif %}
+</div>
+{% endblock %}

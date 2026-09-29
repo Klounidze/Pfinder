@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Мой профиль" %} — ProFinder{% endblock %}
+
+{% block content %}
+<div class="profile-page animate-fade-in-up">
+    <div class="profile-header">
+        <h1>{% trans "Мой профиль" %}</h1>
+        <p>{% trans "Управляйте своими данными и услугами" %}</p>
+    </div>
+
+    <div class="profile-grid">
+        <!-- Личные данные -->
+        <div class="profile-card">
+            <h3>👤 {% trans "Личные данные" %}</h3>
+            {% if profile.avatar %}
+                <img src="{{ profile.avatar.url }}" alt="avatar"
+                     style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 12px;">
+            {% endif %}
+            <div class="profile-info">
+                <div class="info-row"><span class="label">{% trans "Логин" %}</span><span class="value">{{ user.username }}</span></div>
+                <div class="info-row"><span class="label">{% trans "Имя" %}</span><span class="value">{{ user.first_name|default:"—" }}</span></div>
+                <div class="info-row"><span class="label">{% trans "Фамилия" %}</span><span class="value">{{ user.last_name|default:"—" }}</span></div>
+                <div class="info-row"><span class="label">Email</span><span class="value">{{ user.email|default:"—" }}</span></div>
+                <div class="info-row"><span class="label">{% trans "Телефон" %}</span><span class="value">{{ profile.phone|default:"—" }}</span></div>
+                <div class="info-row"><span class="label">{% trans "Тип услуги" %}</span><span class="value">{{ profile.get_service_type_display|default:"—" }}</span></div>
+                <div class="info-row"><span class="label">{% trans "Страна" %}</span><span class="value">{{ profile.country|default:"—" }}</span></div>
+                <div class="info-row"><span class="label">{% trans "Город" %}</span><span class="value">{{ profile.city|default:"—" }}</span></div>
+            </div>
+            <a href="{% url 'edit_profile' %}" class="btn btn-primary btn-block">✏️ {% trans "Редактировать" %}</a>
+        </div>
+
+        <!-- Статистика -->
+        <div class="profile-card">
+            <h3>📊 {% trans "Статистика" %}</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">{{ my_services.count }}</span>
+                    <span class="stat-label">{% trans "Мои услуги" %}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ reviews.count }}</span>
+                    <span class="stat-label">{% trans "Отзывы" %}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ portfolio.count }}</span>
+                    <span class="stat-label">{% trans "Портфолио" %}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{% if profile.is_provider %}✓{% else %}—{% endif %}</span>
+                    <span class="stat-label">{% trans "Исполнитель" %}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="profile-card full-width">
+            <h3>⚡ {% trans "Быстрые действия" %}</h3>
+            <div class="actions-grid">
+                <a href="{% url 'add_provider' %}" class="action-btn">➕ {% trans "Добавить услугу" %}</a>
+                <a href="{% url 'my_orders' %}" class="action-btn">📋 {% trans "Мои заказы" %}</a>
+                <a href="{% url 'inbox' %}" class="action-btn">💬 {% trans "Сообщения" %}</a>
+                <a href="{% url 'edit_profile' %}" class="action-btn">✏️ {% trans "Редактировать профиль" %}</a>
+            </div>
+        </div>
+
+        <!-- Мои услуги -->
+        {% if my_services %}
+        <div class="profile-card full-width">
+            <h3>🛠️ {% trans "Мои услуги" %}</h3>
+            <div class="provider-grid">
+                {% for s in my_services %}
+                <div class="provider-card">
+                    <div class="card-left">
+                        <div class="avatar">{{ s.title|slice:":1"|upper }}</div>
+                        <div class="main-info">
+                            <h3><a href="{% url 'service_detail' s.pk %}">{{ s.title }}</a></h3>
+                            <div class="tags"><span class="category-tag">{{ s.get_category_display }}</span></div>
+                            <div class="location">📍 {{ s.country }}, {{ s.city }}</div>
+                        </div>
+                    </div>
+                    <div class="card-right">
+                        <span class="badge {% if s.is_active %}badge-active{% else %}badge-inactive{% endif %}">
+                            {% if s.is_active %}{% trans "Активна" %}{% else %}{% trans "Неактивна" %}{% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

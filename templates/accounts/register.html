@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Регистрация" %} — ProFinder{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card animate-fade-in-up">
+        <h2>🎯 Pro<span class="accent">Finder</span></h2>
+        <p class="subtitle">{% trans "Создайте новый аккаунт" %}</p>
+
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <small style="color: var(--hh-accent);">{{ field.errors.0 }}</small>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-block">{% trans "Зарегистрироваться" %}</button>
+        </form>
+
+        <p class="auth-link">
+            {% trans "Уже есть аккаунт?" %} <a href="{% url 'login' %}">{% trans "Войти" %}</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

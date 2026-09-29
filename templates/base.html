@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ProFinder — Поиск профессионалов{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="{% url 'index' %}">
+                    🎯 Pro<span class="accent">Finder</span>
+                </a>
+            </div>
+            <div class="nav-menu">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'add_provider' %}" class="{% if request.resolver_match.url_name == 'add_provider' %}active{% endif %}">➕ Добавить</a>
+                    <a href="{% url 'profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">👤 Профиль</a>
+
+                    <!-- Уведомления -->
+                    <div class="notifications-wrapper">
+                        <a href="#" class="notifications-btn" onclick="toggleNotifications(event)">
+                            💬
+                            {% if unread_count > 0 %}
+                                <span class="notification-badge" id="notificationBadge">{{ unread_count }}</span>
+                            {% endif %}
+                        </a>
+                        <div class="notifications-dropdown" id="notificationsDropdown">
+                            <div class="notifications-header">
+                                <span>📬 Уведомления</span>
+                                {% if unread_count > 0 %}
+                                    <a href="#" onclick="markAllRead(event)" style="font-size:0.8rem; color: var(--hh-accent);">Прочитать все</a>
+                                {% endif %}
+                            </div>
+                            <div class="notifications-list" id="notificationsList">
+                                {% if notifications_list %}
+                                    {% for notif in notifications_list %}
+                                        <a href="#" class="notification-item {% if not notif.is_read %}unread{% endif %}"
+                                           onclick="openChatWithUser({{ notif.other_user_id }}, '{{ notif.other_user_name }}')">
+                                            <div class="notification-avatar">{{ notif.sender_name|slice:":1"|upper }}</div>
+                                            <div class="notification-content">
+                                                <div class="notification-name">{{ notif.sender_name }}</div>
+                                                <div class="notification-text">{{ notif.content }}</div>
+                                                <div class="notification-time">{{ notif.created_at|date:"d.m.Y H:i" }}</div>
+                                            </div>
+                                            {% if not notif.is_read %}
+                                                <div class="notification-dot"></div>
+                                            {% endif %}
+                                        </a>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="notification-empty">😊 Нет новых сообщений</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <span class="user-name">👤 {{ user.username }}</span>
+                    <a href="{% url 'logout' %}">Выйти</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="{% if request.resolver_match.url_name == 'login' %}active{% endif %}">Войти</a>
+                    <a href="{% url 'register' %}" class="btn-nav">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer>
+        <p>© 2024 ProFinder — <span class="accent">Поиск профессионалов рядом</span></p>
+    </footer>
+
+    <style>
+        /* ===== УВЕДОМЛЕНИЯ ===== */
+        .notifications-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notifications-btn {
+            position: relative;
+            padding: 8px 12px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            border-radius: var(--hh-radius);
+            transition: all 0.2s ease;
+        }
+
+        .notifications-btn:hover {
+            color: var(--hh-white);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--hh-accent);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 50%;
+            min-width: 18px;
+            text-align: center;
+            line-height: 1.2;
+            border: 2px solid var(--hh-primary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .notifications-dropdown {
+            display: none;
+            position: absolute;
+            top: 42px;
+            right: 0;
+            width: 360px;
+            max-height: 420px;
+            background: var(--hh-white);
+            border-radius: var(--hh-radius-lg);
+            border: 1px solid #e0e0e0;
+            box-shadow: var(--hh-shadow-hover);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .notifications-dropdown.active {
+            display: block;
+            animation: slideDown 0.2s ease forwards;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notifications-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            color: var(--hh-primary);
+        }
+
+        .notifications-list {
+            max-height: 350px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+
+        .notification-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            text-decoration: none;
+            color: var(--hh-primary);
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background: var(--hh-gray-lighter);
+        }
+
+        .notification-item.unread {
+            background: var(--hh-accent-light);
+            border-left-color: var(--hh-accent);
+        }
+
+        .notification-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--hh-primary);
+            color: var(--hh-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .notification-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notification-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--hh-primary);
+        }
+
+        .notification-text {
+            font-size: 0.8rem;
+            color: var(--hh-gray);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .notification-time {
+            font-size: 0.65rem;
+            color: var(--hh-gray);
+            margin-top: 2px;
+        }
+
+        .notification-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--hh-accent);
+            flex-shrink: 0;
+        }
+
+        .notification-empty {
+            padding: 30px 20px;
+            text-align: center;
+            color: var(--hh-gray);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .notifications-dropdown {
+                width: calc(100vw - 32px);
+                right: -60px;
+            }
+        }
+    </style>
+
+    <script>
+        // ===== УВЕДОМЛЕНИЯ =====
+        function toggleNotifications(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const dropdown = document.getElementById('notificationsDropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        function markAllRead(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            fetch('/chat/api/mark_all_read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            })
+            .catch(error => console.error('Ошибка:', error));
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Закрытие dropdown при клике вне
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notificationsDropdown');
+            const btn = document.querySelector('.notifications-btn');
+            if (dropdown && dropdown.classList.contains('active') &&
+                !dropdown.contains(e.target) && !btn.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+
+        // Закрытие по ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const dropdown = document.getElementById('notificationsDropdown');
+                if (dropdown && dropdown.classList.contains('active')) {
+                    dropdown.classList.remove('active');
+                }
+            }
+        });
+
+        // Периодическое обновление уведомлений (каждые 30 секунд)
+        setInterval(function() {
+            fetch('/chat/api/notifications/count/')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notificationBadge');
+                    if (data.unread_count > 0) {
+                        if (badge) {
+                            badge.textContent = data.unread_count;
+                            badge.style.display = 'inline';
+                        } else {
+                            const btn = document.querySelector('.notifications-btn');
+                            const newBadge = document.createElement('span');
+                            newBadge.className = 'notification-badge';
+                            newBadge.id = 'notificationBadge';
+                            newBadge.textContent = data.unread_count;
+                            btn.appendChild(newBadge);
+                        }
+                    } else {
+                        if (badge) {
+                            badge.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(() => {});
+        }, 30000);
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

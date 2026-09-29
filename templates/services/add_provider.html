@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Добавить услугу" %} — ProFinder{% endblock %}
+
+{% block content %}
+<div class="add-form-container animate-fade-in-up">
+    <h2>➕ {% trans "Добавить услугу" %}</h2>
+    <p class="subtitle">{% trans "Заполните информацию о вашей услуге" %}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label>{{ form.category.label }}</label>{{ form.category }}
+                {% if form.category.errors %}<small style="color: var(--hh-accent);">{{ form.category.errors.0 }}</small>{% endif %}
+            </div>
+            <div class="form-group">
+                <label>{{ form.title.label }}</label>{{ form.title }}
+                {% if form.title.errors %}<small style="color: var(--hh-accent);">{{ form.title.errors.0 }}</small>{% endif %}
+            </div>
+            <div class="form-group full-width">
+                <label>{{ form.description.label }}</label>{{ form.description }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.price.label }}</label>{{ form.price }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.price_unit.label }}</label>{{ form.price_unit }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.country.label }}</label>{{ form.country }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.city.label }}</label>{{ form.city }}
+            </div>
+            <div class="form-group full-width">
+                <label>{{ form.phone.label }}</label>{{ form.phone }}
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">💾 {% trans "Сохранить" %}</button>
+            <a href="{% url 'index' %}" class="btn btn-secondary">{% trans "Отмена" %}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

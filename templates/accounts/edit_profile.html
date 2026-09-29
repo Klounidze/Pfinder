@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Редактирование профиля" %} — ProFinder{% endblock %}
+
+{% block content %}
+<div class="add-form-container animate-fade-in-up">
+    <h2>✏️ {% trans "Редактирование профиля" %}</h2>
+    <p class="subtitle">{% trans "Обновите свои данные, добавьте фото и портфолио" %}</p>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label>{{ form.first_name.label }}</label>{{ form.first_name }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.last_name.label }}</label>{{ form.last_name }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.email.label }}</label>{{ form.email }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.phone.label }}</label>{{ form.phone }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.service_type.label }}</label>{{ form.service_type }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.country.label }}</label>{{ form.country }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.city.label }}</label>{{ form.city }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.avatar.label }}</label>{{ form.avatar }}
+            </div>
+            <div class="form-group full-width">
+                <label>{{ form.bio.label }}</label>{{ form.bio }}
+            </div>
+            <div class="form-group full-width" style="flex-direction: row; align-items: center; gap: 10px;">
+                {{ form.is_provider }}
+                <label style="margin: 0;">{{ form.is_provider.label }} — {% trans "отметьте, если вы готовы выполнять заказы" %}</label>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">💾 {% trans "Сохранить" %}</button>
+            <a href="{% url 'profile' %}" class="btn btn-secondary">{% trans "Отмена" %}</a>
+        </div>
+    </form>
+</div>
+
+<!-- Портфолио -->
+<div class="add-form-container" style="margin-top: 24px;">
+    <h2>🖼️ {% trans "Портфолио" %}</h2>
+    <p class="subtitle">{% trans "Загрузите фотографии своих работ" %}</p>
+
+    <form method="post" action="{% url 'upload_portfolio' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label>{{ portfolio_form.image.label }}</label>{{ portfolio_form.image }}
+            </div>
+            <div class="form-group">
+                <label>{{ portfolio_form.caption.label }}</label>{{ portfolio_form.caption }}
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">📤 {% trans "Загрузить фото" %}</button>
+        </div>
+    </form>
+
+    {% if portfolio %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 20px;">
+            {% for img in portfolio %}
+                <div style="position: relative;">
+                    <img src="{{ img.image.url }}" alt="{{ img.caption }}"
+                         style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #e0e0e0;">
+                    <p style="font-size: 0.8rem; color: var(--hh-gray); text-align: center; margin-top: 4px;">{{ img.caption }}</p>
+                    <a href="{% url 'delete_portfolio' img.pk %}"
+                       style="position: absolute; top: 4px; right: 4px; background: var(--hh-accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.8rem;"
+                       onclick="return confirm('{% trans "Удалить фото?" %}');">×</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
